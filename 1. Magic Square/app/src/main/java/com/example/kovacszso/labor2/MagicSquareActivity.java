@@ -1,31 +1,39 @@
 package com.example.kovacszso.labor2;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
-public class MagicSquareActivity extends AppCompatActivity {
+public class MagicSquareActivity extends AppCompatActivity
+        implements DialogInterface.OnDismissListener{
 
     private int _selectedSize;
+
+    private Button _selectedButton;
+
+    private MagicSquareModel _magicSquareModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_magic_square);
 
-        Bundle bundle = this.getIntent().getExtras();
+        final Bundle bundle = this.getIntent().getExtras();
         _selectedSize = bundle.getInt(Constants.kSIZE_Key);
+        _magicSquareModel = new MagicSquareModel(_selectedSize);
 
-        LinearLayout baseLayout = (LinearLayout)findViewById(R.id.BaseLayout);
+        final LinearLayout baseLayout = (LinearLayout)findViewById(R.id.BaseLayout);
         baseLayout.setWeightSum(_selectedSize);
 
         for (int row = 0 ; row < _selectedSize ; row++) {
-            LinearLayout layout = new LinearLayout(this);
+            final LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.HORIZONTAL);
             layout.setWeightSum(_selectedSize);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -34,7 +42,7 @@ public class MagicSquareActivity extends AppCompatActivity {
             layout.setLayoutParams(params);
             baseLayout.addView(layout);
             for (int column = 0 ; column < _selectedSize ; column++) {
-                Button button = new Button(this);
+                final Button button = new Button(this);
                 button.setLayoutParams(params);
                 button.setId(buttonIndexFromRowAndColumn(row, column));
                 layout.addView(button);
@@ -42,10 +50,35 @@ public class MagicSquareActivity extends AppCompatActivity {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-
+                        _selectedButton = button;
+                        final KeypadDialog keypadDialog = new KeypadDialog(MagicSquareActivity.this, _selectedSize);
+                        keypadDialog.setOnDismissListener(MagicSquareActivity.this);
+                        keypadDialog.show();
                     }
                 });
             }
+        }
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        KeypadDialog closedKeypadDialog = (KeypadDialog)dialog;
+        final int result = closedKeypadDialog.getResult();
+        if (result == 0) {
+            //Nothing was selected
+            return;
+        }
+        _selectedButton.setText("" + result);
+
+        _magicSquareModel.updateTile(_selectedButton.getId(), result);
+
+        _selectedButton = null;
+        if (_magicSquareModel.isSolvedCorrectly()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Congratulations")
+                    .setMessage("You have solved the puzzle correctly.")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         }
     }
 
@@ -73,5 +106,9 @@ public class MagicSquareActivity extends AppCompatActivity {
 
     private int buttonIndexFromRowAndColumn(int row, int column) {
         return row * _selectedSize + column;
+    }
+
+    private Button buttonWithIndex(int index) {
+        return (Button)findViewById(index);
     }
 }
