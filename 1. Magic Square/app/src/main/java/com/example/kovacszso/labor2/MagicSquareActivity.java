@@ -2,6 +2,8 @@ package com.example.kovacszso.labor2;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -79,6 +81,13 @@ public class MagicSquareActivity extends AppCompatActivity
                     .setMessage("You have solved the puzzle correctly.")
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
+            MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.victory);
+            try {
+                mediaPlayer.start();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
