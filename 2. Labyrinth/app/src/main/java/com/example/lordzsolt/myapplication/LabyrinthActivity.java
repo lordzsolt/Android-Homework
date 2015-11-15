@@ -81,6 +81,12 @@ public class LabyrinthActivity extends AppCompatActivity {
                             LabyrinthActivity.this.startNewLabyrinth();
                         }
                     })
+                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            LabyrinthActivity.this.startNewLabyrinth();
+                        }
+                    })
                     .show();
         }
     }
