@@ -10,6 +10,8 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.startGame();
             }
         });
+
     }
 
     @Override

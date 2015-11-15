@@ -12,7 +12,7 @@
         <item>0101111010</item>
         <item>0100000010</item>
         <item>0111111110</item>
-        <item>1000000000</item>
+        <item>1000000003</item>
     </string-array>
     <string-array name="labyrinthMedium">
         <item>0001100001</item>
@@ -26,7 +26,7 @@
         <item>1000010101</item>
         <item>0011110001</item>
         <item>1010100101</item>
-        <item>1000110100</item>
+        <item>1000110103</item>
     </string-array>
     <string-array name="labyrinthDifficult">
         <item>0000000010</item>
@@ -40,6 +40,6 @@
         <item>1010101010</item>
         <item>0100010101</item>
         <item>1010100000</item>
-        <item>0100000100</item>
+        <item>0100000103</item>
     </string-array>
 </resources>

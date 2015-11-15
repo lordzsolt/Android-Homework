@@ -23,6 +23,8 @@ public class LabyrinthModel {
 
     private int _labyrinth[][];
 
+    private boolean _solved;
+
     private static final String _LogTag = "LabyrinthModel";
 
     public LabyrinthModel(String[] labyrinth) {
@@ -58,6 +60,11 @@ public class LabyrinthModel {
     }
 
     public void setBallRow(int ballRow) {
+        _labyrinth[_ballRow][this.getBallColumn()] = LabyrinthObject.LABYRINTH_OBJECT_NOTHING;
+        if (_labyrinth[ballRow][this.getBallColumn()] == LabyrinthObject.LABYRINTH_OBJECT_EXIT) {
+            _solved = true;
+        }
+        _labyrinth[ballRow][this.getBallColumn()] = LabyrinthObject.LABYRINTH_OBJECT_BALL;
         _ballRow = ballRow;
     }
 
@@ -66,6 +73,52 @@ public class LabyrinthModel {
     }
 
     public void setBallColumn(int ballColumn) {
+        _labyrinth[this.getBallRow()][_ballColumn] = LabyrinthObject.LABYRINTH_OBJECT_NOTHING;
+        if (_labyrinth[this.getBallRow()][ballColumn] == LabyrinthObject.LABYRINTH_OBJECT_EXIT) {
+            _solved = true;
+        }
+        _labyrinth[this.getBallRow()][ballColumn] = LabyrinthObject.LABYRINTH_OBJECT_BALL;
         _ballColumn = ballColumn;
     }
+
+    public int getElementAt(int row, int colum) {
+        return _labyrinth[row][colum];
+    }
+
+    public Boolean tryMoveLeft() {
+        if (this.getBallColumn() > 0 && _labyrinth[this.getBallRow()][this.getBallColumn() - 1] != LabyrinthObject.LABYRINTH_OBJECT_WALL) {
+            this.setBallColumn(this.getBallColumn() - 1);
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean tryMoveRight() {
+        if (this.getBallColumn() < this.getColumns() - 1 && _labyrinth[this.getBallRow()][this.getBallColumn() + 1] != LabyrinthObject.LABYRINTH_OBJECT_WALL) {
+            this.setBallColumn(this.getBallColumn() + 1);
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean tryMoveUp() {
+        if (this.getBallRow() > 0 && _labyrinth[this.getBallRow() - 1][this.getBallColumn()] != LabyrinthObject.LABYRINTH_OBJECT_WALL) {
+            this.setBallRow(this.getBallRow() - 1);
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean tryMoveDown() {
+        if (this.getBallRow() < this.getRows() - 1 && _labyrinth[this.getBallRow() + 1][this.getBallColumn()] != LabyrinthObject.LABYRINTH_OBJECT_WALL) {
+            this.setBallRow(this.getBallRow() + 1);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isSolved() {
+        return _solved;
+    }
+
 }
