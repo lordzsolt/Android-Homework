@@ -25,6 +25,7 @@ public class LabyrinthView extends View {
     private int black = Color.BLACK;
     private int yellow = Color.YELLOW;
 
+    private int _wallColor = Color.GREEN;
 
     private boolean init = false;
 
@@ -109,11 +110,11 @@ public class LabyrinthView extends View {
                 paint);
         paint.setColor(black);
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(12);
+        paint.setTextSize(40);
         canvas.drawText(
                 "EXIT",
                 (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].left + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].right) / 2,
-                (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].top + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].bottom) / 2 + 5,
+                (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].top + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].bottom) / 2 + 15,
                 paint);
         drawMyCircle(model.getBallRow(), model.getBallColumn(), yellow);
     }
