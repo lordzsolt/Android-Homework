@@ -1,6 +1,7 @@
 package com.example.lordzsolt.myapplication;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -8,29 +9,21 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
+import android.view.Window;
 import android.widget.RelativeLayout;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
 
 
 public class LabyrinthActivity extends AppCompatActivity {
-
-    private static final String SHARED_PREFERENCES_KEY_COLOR = "ColorKey";
 
     private LabyrinthModel _labyrinthModel;
     private LabyrinthView _labyrinthView;
 
     private long _startTime;
-
-    private Integer _level;
-    private List<Integer> _labirynthStrings;
+    private String[] _labyrinthString;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -52,6 +45,11 @@ public class LabyrinthActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.MENU_LEVEL) {
+            this.showLevelPicker();
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -60,13 +58,7 @@ public class LabyrinthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labyrinth);
 
-        Integer[] array = {R.array.labyrinthEasy, R.array.labyrinthMedium, R.array.labyrinthDifficult};
-
-        _level = 0;
-        _labirynthStrings = new ArrayList<>(Arrays.asList(array));
-
         startNewLabyrinth();
-        this.loadColor();
     }
 
     private void readLabyrinth(int resourceId) {
@@ -86,7 +78,6 @@ public class LabyrinthActivity extends AppCompatActivity {
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            LabyrinthActivity.this.increaseLevel();
                             LabyrinthActivity.this.startNewLabyrinth();
                         }
                     })
@@ -100,9 +91,12 @@ public class LabyrinthActivity extends AppCompatActivity {
             baseLayout.removeView(_labyrinthView);
         }
 
-        Log.d("LAB","" + R.array.labyrinthEasy);
-        Log.d("LAB","" + _labirynthStrings.get(_level));
-        readLabyrinth(_labirynthStrings.get(_level));
+        if (_labyrinthString == null) {
+            Resources res = this.getResources();
+            _labyrinthString = res.getStringArray(R.array.labyrinthEasy);
+        }
+
+        _labyrinthModel = new LabyrinthModel(_labyrinthString);
 
         _labyrinthView = new LabyrinthView(this, _labyrinthModel);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
@@ -139,18 +133,10 @@ public class LabyrinthActivity extends AppCompatActivity {
             }
         });
 
+        this.loadColor();
         baseLayout.addView(_labyrinthView);
 
         _startTime = System.currentTimeMillis();
-    }
-
-    private void increaseLevel() {
-        if (_level < _labirynthStrings.size() - 1) {
-            _level++;
-        }
-        else {
-            _level = 0;
-        }
     }
 
     private void showColorPickerAlert() {
@@ -172,13 +158,97 @@ public class LabyrinthActivity extends AppCompatActivity {
     private void saveColor(int color) {
         SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt(SHARED_PREFERENCES_KEY_COLOR, color);
+        editor.putInt(Constants.SHARED_PREFERENCES_KEY_COLOR, color);
         editor.apply();
     }
 
     private void loadColor() {
         SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
-        int color = sharedPreferences.getInt(SHARED_PREFERENCES_KEY_COLOR, Color.GREEN);
+        int color = sharedPreferences.getInt(Constants.SHARED_PREFERENCES_KEY_COLOR, Color.GREEN);
         _labyrinthView.setWallColor(color);
+    }
+
+    private void showLevelPicker() {
+        final CharSequence[] items = { "Local", "Online"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select level source");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                if (item == 0) {
+                    showLocalLevels();
+                }
+                else {
+                    downloadLevels();
+                }
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void showLocalLevels() {
+        final CharSequence[] items = { "Easy", "Medium", "Hard"};
+        final int levels[] = {R.array.labyrinthEasy, R.array.labyrinthMedium, R.array.labyrinthDifficult};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Level");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                Resources res = LabyrinthActivity.this.getResources();
+                _labyrinthString = res.getStringArray(levels[item]);
+                startNewLabyrinth();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void downloadLevels() {
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Downloading");
+        progressDialog.show();
+        String downloadURL = Constants.WEBSERVICE_BASE_URL + Constants.WEBSERVICE_ENDPOINT_AVAILABLE_LEVELS;
+        Downloader downloader = new Downloader(downloadURL, new Downloader.AsyncResponse() {
+            @Override
+            public void processFinish(String output) {
+                progressDialog.dismiss();
+                String[] levelList = output.split("#");
+                showDownloadedLevels(levelList);
+            }
+        });
+        downloader.execute();
+    }
+
+    private void showDownloadedLevels(final String[] levels) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select level");
+        builder.setItems(levels, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                downloadLevel(levels[item]);
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void downloadLevel(String level) {
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Downloading");
+        progressDialog.show();
+
+        String downloadURL = Constants.WEBSERVICE_BASE_URL + Constants.WEBSERVICE_ENDPOINT_LEVEL + level;
+        Downloader downloader = new Downloader(downloadURL, new Downloader.AsyncResponse() {
+            @Override
+            public void processFinish(String output) {
+                progressDialog.dismiss();
+                if (output == null) {
+                    return;
+                }
+                final String[] components = output.split("#");
+
+                _labyrinthString = Arrays.copyOfRange(components, 2, components.length - 2);
+                LabyrinthActivity.this.startNewLabyrinth();
+            }
+        });
+        downloader.execute();
     }
 }
