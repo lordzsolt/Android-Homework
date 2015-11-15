@@ -1,8 +1,11 @@
 package com.example.lordzsolt.myapplication;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,7 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+
 public class LabyrinthActivity extends AppCompatActivity {
+
+    private static final String SHARED_PREFERENCES_KEY_COLOR = "ColorKey";
 
     private LabyrinthModel _labyrinthModel;
     private LabyrinthView _labyrinthView;
@@ -25,6 +31,29 @@ public class LabyrinthActivity extends AppCompatActivity {
 
     private Integer _level;
     private List<Integer> _labirynthStrings;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.MENU_COLOR) {
+            this.showColorPickerAlert();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +66,7 @@ public class LabyrinthActivity extends AppCompatActivity {
         _labirynthStrings = new ArrayList<>(Arrays.asList(array));
 
         startNewLabyrinth();
+        this.loadColor();
     }
 
     private void readLabyrinth(int resourceId) {
@@ -123,25 +153,32 @@ public class LabyrinthActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    private void showColorPickerAlert() {
+        final CharSequence[] items = { "Red", "Green", "Blue", "Magenta"};
+        final int colors[]={Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Pick a color");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                LabyrinthActivity.this._labyrinthView.setWallColor(colors[item]);
+                saveColor(colors[item]);
+                _labyrinthView.postInvalidate();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    private void saveColor(int color) {
+        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(SHARED_PREFERENCES_KEY_COLOR, color);
+        editor.apply();
+    }
 
-        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-
-        return super.onOptionsItemSelected(item);
+    private void loadColor() {
+        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+        int color = sharedPreferences.getInt(SHARED_PREFERENCES_KEY_COLOR, Color.GREEN);
+        _labyrinthView.setWallColor(color);
     }
 }

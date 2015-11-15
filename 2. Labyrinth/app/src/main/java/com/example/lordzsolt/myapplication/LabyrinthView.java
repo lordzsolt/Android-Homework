@@ -21,11 +21,15 @@ public class LabyrinthView extends View {
     private Rect[][] Rectangles;
 
     private Canvas canvas;
-    private int green = Color.GREEN;
     private int black = Color.BLACK;
     private int yellow = Color.YELLOW;
 
     private int _wallColor = Color.GREEN;
+
+    public void setWallColor(int _wallColor) {
+        this._wallColor = _wallColor;
+        this.postInvalidate();
+    }
 
     private boolean init = false;
 
@@ -45,11 +49,11 @@ public class LabyrinthView extends View {
             init = true;
         }
         else {
-            paint.setColor(green);
+            paint.setColor(_wallColor);
             canvas.drawRect(0, 0, width, height, paint);
             paint.setColor(black);
             canvas.drawRect(4, 4, width - 4, height - 4, paint);
-            paint.setColor(green);
+            paint.setColor(_wallColor);
             for (int i = 0; i < blocks_in_a_col; i++) {
                 for (int j = 0; j < blocks_in_a_row; j++) {
                     if (model.getElementAt(i, j) == LabyrinthModel.LabyrinthObject.LABYRINTH_OBJECT_WALL) {
@@ -74,13 +78,13 @@ public class LabyrinthView extends View {
     }
 
     private void initialize() {
-        paint.setColor( green );
+        paint.setColor( _wallColor );
         height = this.getHeight();// canvas.getHeight();
         width = this.getWidth();// canvas.getWidth();
         canvas.drawRect(0, 0, width, height, paint);
         paint.setColor( black );
         canvas.drawRect(4, 4, width - 4, height - 4, paint);
-        paint.setColor( green );
+        paint.setColor( _wallColor );
 
         Rectangles = new Rect[ blocks_in_a_col][ blocks_in_a_row ];
 
