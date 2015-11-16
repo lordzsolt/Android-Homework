@@ -9,12 +9,15 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.widget.RelativeLayout;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class LabyrinthActivity extends AppCompatActivity {
@@ -24,6 +27,11 @@ public class LabyrinthActivity extends AppCompatActivity {
 
     private long _startTime;
     private String[] _labyrinthString;
+
+    private Timer _moveTimer;
+    private int _moveIndex;
+
+    private boolean _computerControlled;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -42,6 +50,11 @@ public class LabyrinthActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.MENU_COLOR) {
             this.showColorPickerAlert();
+            return true;
+        }
+
+        if (id == R.id.MENU_CONTROL) {
+            this.showControlOptions();
             return true;
         }
 
@@ -70,7 +83,7 @@ public class LabyrinthActivity extends AppCompatActivity {
 
     private void onBallMove() {
         _labyrinthView.postInvalidate();
-        if (_labyrinthModel.isSolved()) {
+        if (_labyrinthModel.isSolved() && !_computerControlled) {
             final long solveTime = System.currentTimeMillis() - _startTime;
             new AlertDialog.Builder(this)
                     .setTitle("Congratulations")
@@ -92,6 +105,7 @@ public class LabyrinthActivity extends AppCompatActivity {
     }
 
     private void startNewLabyrinth() {
+        stopTimer();
         final RelativeLayout baseLayout = (RelativeLayout)findViewById(R.id.BaseLayout);
         if (_labyrinthView != null) {
             baseLayout.removeView(_labyrinthView);
@@ -112,6 +126,9 @@ public class LabyrinthActivity extends AppCompatActivity {
         _labyrinthView.setOnTouchListener(new OnSwipeTouchListener(this) {
             @Override
             public void onSwipeLeft() {
+                if (_computerControlled) {
+                    return;
+                }
                 if (_labyrinthModel.tryMoveLeft()) {
                     LabyrinthActivity.this.onBallMove();
                 }
@@ -119,6 +136,9 @@ public class LabyrinthActivity extends AppCompatActivity {
 
             @Override
             public void onSwipeRight() {
+                if (_computerControlled) {
+                    return;
+                }
                 if (_labyrinthModel.tryMoveRight()) {
                     LabyrinthActivity.this.onBallMove();
                 }
@@ -126,6 +146,9 @@ public class LabyrinthActivity extends AppCompatActivity {
 
             @Override
             public void onSwipeUp() {
+                if (_computerControlled) {
+                    return;
+                }
                 if (_labyrinthModel.tryMoveUp()) {
                     LabyrinthActivity.this.onBallMove();
                 }
@@ -133,6 +156,9 @@ public class LabyrinthActivity extends AppCompatActivity {
 
             @Override
             public void onSwipeDown() {
+                if (_computerControlled) {
+                    return;
+                }
                 if (_labyrinthModel.tryMoveDown()) {
                     LabyrinthActivity.this.onBallMove();
                 }
@@ -150,7 +176,8 @@ public class LabyrinthActivity extends AppCompatActivity {
         final int colors[]={Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Pick a color");
-        builder.setItems(items, new DialogInterface.OnClickListener() {
+        builder.setItems(items, new DialogInterface.OnClickListener()
+        {
             public void onClick(DialogInterface dialog, int item) {
                 LabyrinthActivity.this._labyrinthView.setWallColor(colors[item]);
                 saveColor(colors[item]);
@@ -172,6 +199,87 @@ public class LabyrinthActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
         int color = sharedPreferences.getInt(Constants.SHARED_PREFERENCES_KEY_COLOR, Color.GREEN);
         _labyrinthView.setWallColor(color);
+    }
+
+
+    private void showControlOptions() {
+        final CharSequence[] items = { "Human", "Computer"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Control Type");
+        builder.setItems(items, new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog, int item) {
+                if (item == 0) {
+                    humanControl();
+                }
+                else {
+                    computerControl();
+                }
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void humanControl() {
+        _moveIndex = 0;
+        if (_computerControlled && _labyrinthModel.isSolved()) {
+            startNewLabyrinth();
+        }
+        _computerControlled = false;
+    }
+
+    private void computerControl() {
+        _computerControlled = true;
+        LabyrinthSolver solver = new LabyrinthSolver(_labyrinthString, _labyrinthModel.getBallRow(), _labyrinthModel.getBallColumn());
+
+        final int[] directions = solver.solution();
+        if (directions == null) {
+            _computerControlled = false;
+            return;
+        }
+        _moveIndex = 0;
+        _moveTimer = new Timer();
+        _moveTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (_moveIndex == directions.length) {
+                    stopTimer();
+                    return;
+                }
+                switch (directions[_moveIndex]) {
+                    case LabyrinthSolver.MoveDirection.LEFT: {
+                        _labyrinthModel.tryMoveLeft();
+                        LabyrinthActivity.this.onBallMove();
+                        break;
+                    }
+                    case LabyrinthSolver.MoveDirection.UP: {
+                        _labyrinthModel.tryMoveUp();
+                        LabyrinthActivity.this.onBallMove();
+                        break;
+                    }
+                    case LabyrinthSolver.MoveDirection.DOWN: {
+                        _labyrinthModel.tryMoveDown();
+                        LabyrinthActivity.this.onBallMove();
+                        break;
+                    }
+                    case LabyrinthSolver.MoveDirection.RIGHT: {
+                        _labyrinthModel.tryMoveRight();
+                        LabyrinthActivity.this.onBallMove();
+                        break;
+                    }
+                }
+                _moveIndex++;
+            }
+        }, 0, 500);
+    }
+
+    private void stopTimer() {
+        if (_moveTimer != null) {
+            _moveTimer.cancel();
+            _moveTimer.purge();
+            _moveTimer = null;
+        }
     }
 
     private void showLevelPicker() {
