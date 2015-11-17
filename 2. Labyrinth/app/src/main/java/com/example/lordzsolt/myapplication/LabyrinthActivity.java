@@ -305,7 +305,8 @@ public class LabyrinthActivity extends AppCompatActivity {
         final int levels[] = {R.array.labyrinthEasy, R.array.labyrinthMedium, R.array.labyrinthDifficult};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Level");
-        builder.setItems(items, new DialogInterface.OnClickListener() {
+        builder.setItems(items, new DialogInterface.OnClickListener()
+        {
             public void onClick(DialogInterface dialog, int item) {
                 Resources res = LabyrinthActivity.this.getResources();
                 _labyrinthString = res.getStringArray(levels[item]);
@@ -357,9 +358,12 @@ public class LabyrinthActivity extends AppCompatActivity {
                 if (output == null) {
                     return;
                 }
-                final String[] components = output.split("#");
+                String[] components = output.split("#");
+                StringBuilder builder = new StringBuilder(components[components.length - 1].trim());
+                builder.setCharAt(builder.length() - 1, '3');
+                components[components.length - 1] = builder.toString();
 
-                _labyrinthString = Arrays.copyOfRange(components, 2, components.length - 2);
+                _labyrinthString = Arrays.copyOfRange(components, 2, components.length);
                 LabyrinthActivity.this.startNewLabyrinth();
             }
         });
