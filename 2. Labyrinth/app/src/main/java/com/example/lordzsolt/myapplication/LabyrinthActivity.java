@@ -223,6 +223,7 @@ public class LabyrinthActivity extends AppCompatActivity {
 
     private void humanControl() {
         _moveIndex = 0;
+        stopTimer();
         if (_computerControlled && _labyrinthModel.isSolved()) {
             startNewLabyrinth();
         }

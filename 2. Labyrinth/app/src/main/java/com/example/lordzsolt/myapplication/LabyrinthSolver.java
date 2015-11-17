@@ -62,7 +62,6 @@ public class LabyrinthSolver {
                 return findSolution(visited, currentPosition);
             }
 
-
             //Down
             if (currentPosition.row < _labyrinthRows - 1 &&
                     Character.getNumericValue(_labyrinth[currentPosition.row + 1].charAt(currentPosition.column)) != LabyrinthModel.LabyrinthObject.LABYRINTH_OBJECT_WALL &&
