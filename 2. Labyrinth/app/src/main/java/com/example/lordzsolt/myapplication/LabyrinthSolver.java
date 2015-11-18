@@ -44,7 +44,7 @@ public class LabyrinthSolver {
     }
 
     public int[] solution() {
-        Vector<Point> order = new Vector<>();
+        Vector<Point> order = new Vector<Point>();
         order.insertElementAt(_ballPosition, 0);
 
         int[][] visited = new int[_labyrinthRows][_labyrinthColumns];

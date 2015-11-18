@@ -25,6 +25,8 @@ public class LabyrinthActivity extends AppCompatActivity {
     private LabyrinthModel _labyrinthModel;
     private LabyrinthView _labyrinthView;
 
+    private AccelerometerListener _accelerometerListener;
+
     private long _startTime;
     private String[] _labyrinthString;
 
@@ -71,14 +73,64 @@ public class LabyrinthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_labyrinth);
 
+        startAccelerometer();
         startNewLabyrinth();
     }
 
-    private void readLabyrinth(int resourceId) {
-        Resources res = this.getResources();
-        String[] labyrinthRows = res.getStringArray(resourceId);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        _accelerometerListener.resume();
+    }
 
-        _labyrinthModel = new LabyrinthModel(labyrinthRows);
+    @Override
+    protected void onPause() {
+        super.onPause();
+        _accelerometerListener.pause();
+    }
+
+    private void startAccelerometer() {
+        _accelerometerListener = new AccelerometerListener(this) {
+            @Override
+            public void onTiltLeft() {
+                if (_computerControlled) {
+                    return;
+                }
+                if (_labyrinthModel.tryMoveLeft()) {
+                    LabyrinthActivity.this.onBallMove();
+                }
+            }
+
+            @Override
+            public void onTiltRight() {
+                if (_computerControlled) {
+                    return;
+                }
+                if (_labyrinthModel.tryMoveRight()) {
+                    LabyrinthActivity.this.onBallMove();
+                }
+            }
+
+            @Override
+            public void onTiltUp() {
+                if (_computerControlled) {
+                    return;
+                }
+                if (_labyrinthModel.tryMoveUp()) {
+                    LabyrinthActivity.this.onBallMove();
+                }
+            }
+
+            @Override
+            public void onTiltDown() {
+                if (_computerControlled) {
+                    return;
+                }
+                if (_labyrinthModel.tryMoveDown()) {
+                    LabyrinthActivity.this.onBallMove();
+                }
+            }
+        };
     }
 
     private void onBallMove() {
@@ -101,6 +153,7 @@ public class LabyrinthActivity extends AppCompatActivity {
                         }
                     })
                     .show();
+            _accelerometerListener.pause();
         }
     }
 
@@ -123,7 +176,8 @@ public class LabyrinthActivity extends AppCompatActivity {
                 RelativeLayout.LayoutParams.MATCH_PARENT);
         _labyrinthView.setLayoutParams(params);
 
-        _labyrinthView.setOnTouchListener(new OnSwipeTouchListener(this) {
+        _labyrinthView.setOnTouchListener(new OnSwipeTouchListener(this)
+        {
             @Override
             public void onSwipeLeft() {
                 if (_computerControlled) {
@@ -168,7 +222,18 @@ public class LabyrinthActivity extends AppCompatActivity {
         this.loadColor();
         baseLayout.addView(_labyrinthView);
 
+        _computerControlled = false;
         _startTime = System.currentTimeMillis();
+
+
+        Timer scheduler = new Timer();
+        scheduler.schedule(new TimerTask()
+        {
+            @Override
+            public void run() {
+                _accelerometerListener.resume();
+            }
+        }, 500);
     }
 
     private void showColorPickerAlert() {
@@ -231,6 +296,9 @@ public class LabyrinthActivity extends AppCompatActivity {
     }
 
     private void computerControl() {
+        if (_computerControlled) {
+            return;
+        }
         _computerControlled = true;
         LabyrinthSolver solver = new LabyrinthSolver(_labyrinthString, _labyrinthModel.getBallRow(), _labyrinthModel.getBallColumn());
 
