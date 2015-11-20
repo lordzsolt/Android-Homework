@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -227,8 +228,7 @@ public class LabyrinthActivity extends AppCompatActivity {
 
 
         Timer scheduler = new Timer();
-        scheduler.schedule(new TimerTask()
-        {
+        scheduler.schedule(new TimerTask() {
             @Override
             public void run() {
                 _accelerometerListener.resume();
@@ -241,8 +241,7 @@ public class LabyrinthActivity extends AppCompatActivity {
         final int colors[]={Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Pick a color");
-        builder.setItems(items, new DialogInterface.OnClickListener()
-        {
+        builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
                 LabyrinthActivity.this._labyrinthView.setWallColor(colors[item]);
                 saveColor(colors[item]);
@@ -271,8 +270,7 @@ public class LabyrinthActivity extends AppCompatActivity {
         final CharSequence[] items = { "Human", "Computer"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Control Type");
-        builder.setItems(items, new DialogInterface.OnClickListener()
-        {
+        builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
                 if (item == 0) {
                     humanControl();
@@ -374,8 +372,7 @@ public class LabyrinthActivity extends AppCompatActivity {
         final int levels[] = {R.array.labyrinthEasy, R.array.labyrinthMedium, R.array.labyrinthDifficult};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Level");
-        builder.setItems(items, new DialogInterface.OnClickListener()
-        {
+        builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
                 Resources res = LabyrinthActivity.this.getResources();
                 _labyrinthString = res.getStringArray(levels[item]);
@@ -387,10 +384,16 @@ public class LabyrinthActivity extends AppCompatActivity {
     }
 
     private void downloadLevels() {
+        if (!this.isNetworkConnected()) {
+            this.displayNoInternetConnectionAlert();
+            return;
+        }
+
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Downloading");
         progressDialog.show();
         String downloadURL = Constants.WEBSERVICE_BASE_URL + Constants.WEBSERVICE_ENDPOINT_AVAILABLE_LEVELS;
+
         Downloader downloader = new Downloader(downloadURL, new Downloader.AsyncResponse() {
             @Override
             public void processFinish(String output) {
@@ -415,6 +418,10 @@ public class LabyrinthActivity extends AppCompatActivity {
     }
 
     private void downloadLevel(String level) {
+        if (!this.isNetworkConnected()) {
+            this.displayNoInternetConnectionAlert();
+            return;
+        }
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Downloading");
         progressDialog.show();
@@ -437,5 +444,21 @@ public class LabyrinthActivity extends AppCompatActivity {
             }
         });
         downloader.execute();
+    }
+
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null;
+    }
+
+
+    private void displayNoInternetConnectionAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error")
+               .setMessage("Please make sure you have an active internet connection.")
+               .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 }
